@@ -1,0 +1,34 @@
+$outline-color: #1B8FB8;
+
+.App {
+  padding: 20px;
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+}
+
+.radio-component-container {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin-top: 100px;
+  border: 2px solid $outline-color;
+  padding: 15px;
+}
+
+.radio-container {
+  display: flex;
+  flex-direction: column;
+}
+
+.main-content-wrapper {
+  margin: 10px 30px;
+  border: 2px solid $outline-color;
+  border-radius: 7px;
+  padding: 15px
+
+}
+
