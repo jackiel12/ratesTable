@@ -17,7 +17,7 @@ import Box from "@material-ui/core/Box";
 import RefreshRadioButton from "./RefreshRadioButton.jsx";
 import "../App.scss";
 import axios from "axios";
-import throttle from "lodash.throttle"
+import throttle from "lodash.throttle";
 
 const useStyles = () => ({
   table: {
@@ -41,7 +41,7 @@ class RatesTable extends React.Component {
       query: "",
       refreshFrequency: 5000, //default frequency to start in ms
     };
-    this.throttledFetchData = throttle(this.fetchData, 2500)
+    this.throttledFetchData = throttle(this.fetchData, 2500);
   }
 
   frequencyChange = (e) => {
@@ -86,12 +86,9 @@ class RatesTable extends React.Component {
     this.setState({ query: event.target.value });
   };
 
-
-
-
   fetchData = async () => {
     // uncomment the line below to check that polling is working with the intervals
-      console.log('fetching...')
+    //console.log('fetching...')
     const rawData = await axios.get(constants.RatesAPI);
 
     let results = rawData.data;
@@ -101,13 +98,19 @@ class RatesTable extends React.Component {
 
   componentDidMount() {
     this.fetchData();
-    this.interval = setInterval(this.throttledFetchData, this.state.refreshFrequency);
+    this.interval = setInterval(
+      this.throttledFetchData,
+      this.state.refreshFrequency
+    );
   }
 
   componentDidUpdate(prevProps, prevState) {
     if (prevState.refreshFrequency !== this.state.refreshFrequency) {
       clearInterval(this.interval);
-      this.interval = setInterval(this.throttledFetchData, this.state.refreshFrequency);
+      this.interval = setInterval(
+        this.throttledFetchData,
+        this.state.refreshFrequency
+      );
     }
   }
 
@@ -138,16 +141,22 @@ class RatesTable extends React.Component {
             <Table className={classes.table} aria-label="simple table">
               <TableHead>
                 <TableRow>
-                  <TableCell><b>From:</b></TableCell>
-                  <TableCell align="right"><b>To:</b></TableCell>
-                  <TableCell align="right"><b>Exchange Rate</b></TableCell>
+                  <TableCell>
+                    <b>From:</b>
+                  </TableCell>
+                  <TableCell align="right">
+                    <b>To:</b>
+                  </TableCell>
+                  <TableCell align="right">
+                    <b>Exchange Rate</b>
+                  </TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>{this.createRows(this.state.data)}</TableBody>
             </Table>
           </TableContainer>
         </div>
-        <RefreshRadioButton frequencyChange={this.frequencyChange}/>
+        <RefreshRadioButton frequencyChange={this.frequencyChange} />
       </Box>
     );
   }
