@@ -1,6 +1,7 @@
 import React from "react";
 import { withStyles } from "@material-ui/core/styles";
 import PropTypes from "prop-types";
+import constants from "../constants/constants.js";
 import Table from "@material-ui/core/Table";
 import TableBody from "@material-ui/core/TableBody";
 import TableCell from "@material-ui/core/TableCell";
@@ -16,6 +17,7 @@ import Box from "@material-ui/core/Box";
 import RefreshRadioButton from "./RefreshRadioButton.jsx";
 import "../App.scss";
 import axios from "axios";
+import throttle from "lodash.throttle"
 
 const useStyles = () => ({
   table: {
@@ -39,6 +41,7 @@ class RatesTable extends React.Component {
       query: "",
       refreshFrequency: 5000, //default frequency to start in ms
     };
+    this.throttledFetchData = throttle(this.fetchData, 2500)
   }
 
   frequencyChange = (e) => {
@@ -46,69 +49,65 @@ class RatesTable extends React.Component {
   };
 
   createRows = (data, query = this.state.query) => {
-    if (query) {
-      let filteredData = data.filter((el) => {
-        return el.from === query;
-      });
+    let newData = query ? data.filter((el) => el.from === query) : data;
 
-      const filteredRows = filteredData.map((el, idx) => {
-        return (
-          <TableRow key={idx.toString()}>
-            <TableCell component="th" scope="row">
-              {el.from}
-            </TableCell>
-            <TableCell align="right">{el.to}</TableCell>
-            <TableCell align="right">{el.rate}</TableCell>
-          </TableRow>
-        );
-      });
+    const newRows = newData.map((el, idx) => {
+      return this.renderRow(el, idx);
+    });
 
-      this.setState({ rows: filteredRows });
-    } else {
-      const newRows = data.map((el, idx) => {
-        return (
-          <TableRow key={idx.toString()}>
-            <TableCell component="th" scope="row">
-              {el.from}
-            </TableCell>
-            <TableCell align="right">{el.to}</TableCell>
-            <TableCell align="right">{el.rate}</TableCell>
-          </TableRow>
-        );
-      });
+    return newRows;
+  };
 
-      this.setState({ rows: newRows });
-    }
+  renderRow = (dataPoint, index) => {
+    return (
+      <TableRow key={index.toString()}>
+        <TableCell component="th" scope="row">
+          {dataPoint.from}
+        </TableCell>
+        <TableCell align="right">{dataPoint.to}</TableCell>
+        <TableCell align="right">{dataPoint.rate}</TableCell>
+      </TableRow>
+    );
+  };
+
+  renderMenuItems = (list) => {
+    let newItems = list.map((el) => {
+      return (
+        <MenuItem key={el} value={el}>
+          {el}
+        </MenuItem>
+      );
+    });
+
+    return newItems;
   };
 
   handleSelect = (event) => {
-    this.createRows(this.state.data, event.target.value);
     this.setState({ query: event.target.value });
   };
 
+
+
+
   fetchData = async () => {
     // uncomment the line below to check that polling is working with the intervals
-    //  console.log('fetching...')
-    const rawData = await axios.get(
-      "https://liquality.io/swap/agent/api/swap/marketinfo"
-    );
+      console.log('fetching...')
+    const rawData = await axios.get(constants.RatesAPI);
 
     let results = rawData.data;
-
-    this.createRows(results);
 
     this.setState({ data: results });
   };
 
   componentDidMount() {
     this.fetchData();
-    this.interval = setInterval(this.fetchData, this.state.refreshFrequency);
+    this.interval = setInterval(this.throttledFetchData, this.state.refreshFrequency);
   }
 
   componentDidUpdate(prevProps, prevState) {
     if (prevState.refreshFrequency !== this.state.refreshFrequency) {
       clearInterval(this.interval);
-      this.interval = setInterval(this.fetchData, this.state.refreshFrequency);
+      this.interval = setInterval(this.throttledFetchData, this.state.refreshFrequency);
     }
   }
 
@@ -123,9 +122,7 @@ class RatesTable extends React.Component {
       <Box display="flex" flex-direction="row" justifyContent="center">
         <div className="main-content-wrapper">
           <FormControl className={classes.formControl}>
-            <InputLabel id="select-label">
-              Filter by Coin
-            </InputLabel>
+            <InputLabel id="select-label">Filter by Coin</InputLabel>
             <Select
               labelId="select-label"
               id="select"
@@ -133,12 +130,7 @@ class RatesTable extends React.Component {
               onChange={this.handleSelect}
             >
               <MenuItem value={""}>All</MenuItem>
-              <MenuItem value={"BTC"}>BTC</MenuItem>
-              <MenuItem value={"ETH"}>ETH</MenuItem>
-              <MenuItem value={"DAI"}>DAI</MenuItem>
-              <MenuItem value={"USDC"}>USDC</MenuItem>
-              <MenuItem value={"WBTC"}>WBTC</MenuItem>
-              <MenuItem value={"USDT"}>USDT</MenuItem>
+              {this.renderMenuItems(constants.CoinCodes)}
             </Select>
           </FormControl>
 
@@ -146,18 +138,16 @@ class RatesTable extends React.Component {
             <Table className={classes.table} aria-label="simple table">
               <TableHead>
                 <TableRow>
-                  <TableCell>From:</TableCell>
-                  <TableCell align="right">To:</TableCell>
-                  <TableCell align="right">Exchange Rate</TableCell>
-                  {/* <TableCell align="right">Carbs&nbsp;(g)</TableCell> */}
-                  {/* <TableCell align="right">Protein&nbsp;(g)</TableCell> */}
+                  <TableCell><b>From:</b></TableCell>
+                  <TableCell align="right"><b>To:</b></TableCell>
+                  <TableCell align="right"><b>Exchange Rate</b></TableCell>
                 </TableRow>
               </TableHead>
-              <TableBody>{this.state.rows}</TableBody>
+              <TableBody>{this.createRows(this.state.data)}</TableBody>
             </Table>
           </TableContainer>
         </div>
-        <RefreshRadioButton frequencyChange={this.frequencyChange} />
+        <RefreshRadioButton frequencyChange={this.frequencyChange}/>
       </Box>
     );
   }
