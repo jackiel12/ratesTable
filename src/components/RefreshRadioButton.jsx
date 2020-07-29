@@ -12,7 +12,13 @@ class RefreshRadioButton extends React.Component {
           onChange={(e) => this.props.frequencyChange(e)}
         >
           <div>
-            <input id="five" type="radio" value={5000} name="frequency" />
+            <input
+              id="five"
+              type="radio"
+              value={5000}
+              name="frequency"
+              defaultChecked
+            />
             <label htmlFor="five">5 seconds</label>
           </div>
           <div>
